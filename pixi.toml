@@ -1,0 +1,24 @@
+[project]
+authors = ["Alexey Shiklomanov <alexey.shiklomanov@gmail.com>"]
+channels = ["conda-forge"]
+description = "Add a short description here"
+name = "m21c-experiments"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = ">=3.13.0,<4"
+h5py = ">=3.12.1,<4"
+xarray = ">=2024.10.0,<2025"
+h5netcdf = ">=1.4.1,<2"
+ipython = ">=8.29.0,<9"
+
+[system-requirements]
+linux = "4.12"
+libc = "2.22"
+
+[pypi-dependencies]
+humanreadable = ">=0.4.0, <0.5"
+humanize = ">=4.11.0, <5"
