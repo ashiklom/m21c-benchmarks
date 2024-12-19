@@ -1,7 +1,7 @@
 __pycache__/
 
 experiments/
-m21c_filespec/
+m21c_filespec
 
 # pixi environments
 .pixi
