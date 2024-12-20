@@ -4,6 +4,7 @@ experiments/
 
 # Links to MERRA locations
 m21c_filespec
+m21c_filespec/
 m21c_all
 
 logs/
