@@ -1,5 +1,99 @@
 #!/usr/bin/env python
 
+import s3fs
+import h5py
+import xarray as xr
+import re
+import humanize
+import pprint
+from collections import OrderedDict
+
+import warnings
+warnings.simplefilter("ignore")
+
+s3 = s3fs.S3FileSystem(anon=False)
+basedir = "gmao-m21c-test-usw2/SAMPLE_DAY"
+fname = s3.glob(basedir + "/e5303_m21c_jan18.flx_tavg*")[0]
+
+f = s3.open(fname, "rb")
+hf = h5py.File(f, "r")
+
+# Now, try with the optimized files
+
+bucket = "gmao-m21c-test-usw2"
+fname = s3.glob(f"{bucket}/experiments/e5303_m21c_jan18.aer_inst_1hr_glo_C360x360x6_v72.2018-01-31T0000Z/*")[0]
+
+f = s3.open(fname, "rb")
+f.close()
+%time hf = h5py.File(f, "r", page_buf_size=1048576)
+hf.close()
+
+def parse_fname(fname):
+    # fname = Path("experiments/e5303_m21c_jan18.aer_inst_1hr_glo_C360x360x6_v72.2018-01-31T0000Z/cNone_p1048576.nc4")
+    stem = fname.split("/")[-1]
+    m = re.match(r"c(.*?)_p([0-9]+)", stem)
+    if not m:
+        raise ValueError(f"Invalid file name: {fname}")
+    chunking = m.group(1)
+    if chunking == "None":
+        chunking = None
+    psize = m.group(2)
+    if psize == "None":
+        psize = None
+    else:
+        psize = int(psize)
+    return {"chunking": chunking, "page_size": psize}
+
+def open_with_props(fname):
+    props = parse_fname(fname)
+    s3 = s3fs.S3FileSystem(anon=False)
+    return xr.open_dataset(h5py.File(
+        s3.open(fname, "rb"),
+        mode="r",
+        page_buf_size = props["page_size"]
+    ), engine="h5netcdf")
+
+def open_plain(fname):
+    try:
+        _ = parse_fname(fname)
+    except ValueError:
+        pass
+    s3 = s3fs.S3FileSystem(anon=False)
+    return xr.open_dataset(h5py.File(
+        s3.open(fname, "rb"),
+        mode="r"
+    ), engine="h5netcdf")
+
+def do_ts(fname, openfunc):
+    ds = openfunc(fname)
+    return ds["T"].mean("time").compute()
+
+def do_spatial(fname, openfunc):
+    ds = openfunc(fname)
+    return ds["T"].mean(("Xdim", "Ydim")).compute()
+
+fnames = s3.glob(f"{bucket}/experiments/e5303_m21c_jan18.aer_inst_1hr_glo_C360x360x6_v72.2018-01-31T0000Z/*")
+fname = fnames[2]
+
+orig = f"{bucket}/SAMPLE_DAY/e5303_m21c_jan18.aer_inst_1hr_glo_C360x360x6_v72.2018-01-31T0000Z.nc4"
+orig_size = s3.disk_usage(orig)
+
+sizes = {key: s3.disk_usage(key)/orig_size for key in fnames}
+sizes = OrderedDict({k: v for k, v in sorted(sizes.items(), key=lambda item: item[1])})
+sizes
+
+fname = list(sizes.keys())[0]
+# fname = orig
+print(fname)
+%time _ = open_with_props(fname)
+%time _ = open_plain(fname)
+%time _ = do_ts(fname, open_plain)
+%time _ = do_ts(fname, open_with_ptops)
+%time _ = do_spatial(fname, open_plain)
+%time _ = do_spatial(fname, open_with_props)
+
+################################################################################
+
 from pathlib import Path
 import pprint
 import subprocess
@@ -128,3 +222,11 @@ describe_h5file(outfile)
 # return outfile
 
 ################################################################################
+import xarray as xr
+from pathlib import Path
+
+fname = Path("m21c_filespec/SAMPLE_DAY/e5303_m21c_jan18.flx_tavg_1hr_glo_C360x360x6_slv.2018-01-31T0030Z.nc4")
+
+ds = xr.open_dataset(fname)
+
+ds["ULML"]

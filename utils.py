@@ -38,7 +38,7 @@ def describe_h5file(fname):
 def get_chunks(hf):
     return {key: hf[key].chunks for key in hf.keys()}
 
-def cloud_optimize(infile: Path, chunking=None, page_size=None, overwrite=False):
+def experiment_file(infile, chunking=None, page_size=None):
     out_root = Path("experiments")
     outdir = out_root / infile.stem
     outdir.mkdir(exist_ok=True, parents=True)
@@ -47,6 +47,18 @@ def cloud_optimize(infile: Path, chunking=None, page_size=None, overwrite=False)
         outfile = outdir / f"c{'x'.join(str(x) for x in chunking)}_p{page_size}.nc4"
     else:
         outfile = outdir / f"cNone_p{page_size}.nc4"
+    return outfile
+
+def cloud_optimize(
+    infile: Path,
+    chunking=None,
+    page_size=None,
+    overwrite=False,
+    outfile=None
+):
+
+    if not outfile:
+        outfile = experiment_file(infile, chunking, page_size)
 
     if outfile.exists() and not overwrite:
         print(f"Outfile exists: {outfile}.")
