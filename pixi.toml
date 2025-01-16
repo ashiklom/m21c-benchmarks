@@ -17,6 +17,8 @@ ipython = ">=8.29.0,<9"
 s3fs = ">=2024.12.0,<2025"
 tqdm = ">=4.67.1,<5"
 dask = ">=2024.12.1,<2025"
+natsort = ">=8.4.0,<9"
+rechunker = ">=0.5.2,<0.6"
 
 [system-requirements]
 linux = "4.12"
