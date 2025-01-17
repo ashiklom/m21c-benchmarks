@@ -2,10 +2,27 @@
 
 from pathlib import Path
 import subprocess
+import os
+import time
 
 from humanize import naturalsize
 
+from typing import Callable
+
 import h5py
+
+def ttime(f: Callable):
+    tw0 = time.time()
+    ts0 = os.times()
+    result = f()
+    tw1 = time.time()
+    ts1 = os.times()
+    tuser = ts1.user - ts0.user
+    tsystem = ts1.system - ts0.system
+    twall = tw1 - tw0
+    print(f"Wall: {twall:.02f}, User: {tuser:.02f}, System: {tsystem:.02f}")
+    return result
+
 
 def file_size(fname: str|Path):
     p = Path(fname)

@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+from typing import Iterable
+
+from utils import ttime
+
 import xarray as xr
 import h5py
 from pathlib import Path
@@ -15,66 +19,57 @@ aer_inst_p8 = sorted(ps8dir.glob("*aer_inst*v72*"))
 
 warnings.simplefilter("ignore")
 
-def open_mf_optim(flist, **kwargs):
+def open_mf_optim(flist: Iterable, **kwargs):
     hflist = (h5py.File(f, mode="r", **kwargs) for f in flist)
     return xr.open_mfdataset(hflist, engine="h5netcdf", drop_variables="anchor")
 
 ##################################################
 # Opening a file
 
-%time ds_orig = xr.open_mfdataset(aer_inst_orig, engine="h5netcdf", drop_variables="anchor")  
-# CPU times: user 12.6 s, sys: 287 ms, total: 12.9 s
-# Wall time: 21.9 s
+ds_orig = ttime(lambda: xr.open_mfdataset(aer_inst_orig, engine="h5netcdf", drop_variables="anchor"))
+# Wall: 21.20, User: 12.70, System: 0.31
+# Wall: 20.19, User: 12.70, System: 0.35
 
-%time ds_p8 = xr.open_mfdataset(aer_inst_p8, engine="h5netcdf", drop_variables="anchor")  
-# CPU times: user 12.2 s, sys: 107 ms, total: 12.3 s
-# Wall time: 17 s
+ds_p8 = ttime(lambda: xr.open_mfdataset(aer_inst_p8, engine="h5netcdf", drop_variables="anchor"))
+# Wall: 16.73, User: 12.32, System: 0.07
+# Wall: 17.65, User: 12.66, System: 0.12
 
-%time ds_p8opt = open_mf_optim(aer_inst_p8, page_buf_size=8*1024*1024)
-# CPU times: user 12.6 s, sys: 147 ms, total: 12.8 s
-# Wall time: 14.2 s
+ds_p8opt = ttime(lambda: open_mf_optim(aer_inst_p8, page_buf_size=8*1024*1024))
+# Wall: 12.18, User: 12.05, System: 0.07
+# Wall: 12.27, User: 12.14, System: 0.10
 
 ########################################
 # Time-averaged vertical profile at a random location
 
-%time ds_orig["DU003"].isel(Xdim=181, Ydim=181, nf=1).mean("time").compute()
-# CPU times: user 27.2 s, sys: 745 ms, total: 27.9 s
-# Wall time: 1min 13s
+_ = ttime(lambda: ds_orig["DU003"].isel(Xdim=181, Ydim=181, nf=1).mean("time").compute())
+# Wall: 73.31, User: 26.75, System: 0.65
 
-%time ds_p8["DU003"].isel(Xdim=181, Ydim=181, nf=1).mean("time").compute()
-# CPU times: user 27.4 s, sys: 499 ms, total: 27.9 s
-# Wall time: 1min 3s
+_ = ttime(lambda: ds_p8["DU003"].isel(Xdim=181, Ydim=181, nf=1).mean("time").compute())
+# Wall: 60.55, User: 27.57, System: 0.59
 
-%time ds_p8opt["DU003"].isel(Xdim=181, Ydim=181, nf=1).mean("time").compute()
-# CPU times: user 27.8 s, sys: 517 ms, total: 28.3 s
-# Wall time: 30.3 s
+_ = ttime(lambda: ds_p8opt["DU003"].isel(Xdim=181, Ydim=181, nf=1).mean("time").compute())
+# Wall: 31.88, User: 27.58, System: 0.53
 
 ########################################
 # Time-averaged map of the entire world at a particular vertical level?
 
-%time ds_orig["DU003"].isel(lev=7, nf=1).mean("time").compute()
-# CPU times: user 1.28 s, sys: 52.9 ms, total: 1.33 s
-# Wall time: 1.34 s
+_ = ttime(lambda: ds_orig["DU003"].isel(lev=7, nf=1).mean("time").compute())
+# Wall: 1.42, User: 1.36, System: 0.05
 
-%time ds_p8["DU003"].isel(lev=7, nf=1).mean("time").compute()
-# CPU times: user 1.3 s, sys: 48.5 ms, total: 1.35 s
-# Wall time: 1.26 s
+_ = ttime(lambda: ds_p8["DU003"].isel(lev=7, nf=1).mean("time").compute())
+# Wall: 1.29, User: 1.32, System: 0.05
 
-%time ds_p8opt["DU003"].isel(lev=7, nf=1).mean("time").compute()
-# CPU times: user 1.29 s, sys: 24.1 ms, total: 1.31 s
-# Wall time: 1.25 s
+_ = ttime(lambda: ds_p8opt["DU003"].isel(lev=7, nf=1).mean("time").compute())
+# Wall: 1.44, User: 1.49, System: 0.04
 
 ########################################
 # Global average of everything
 
-%time ds_orig["DU003"].mean().compute()
-# CPU times: user 2min 46s, sys: 4.08 s, total: 2min 50s
-# Wall time: 3min 41s
+_ = ttime(lambda: ds_orig["DU003"].mean().compute())
+# Wall: 227.35, User: 160.92, System: 4.10
 
-%time ds_p8["DU003"].mean().compute()
-# CPU times: user 2min 42s, sys: 4.4 s, total: 2min 47s
-# Wall time: 4min 6s
+_ = ttime(lambda: ds_p8["DU003"].mean().compute())
+# Wall: 246.04, User: 166.20, System: 3.98
 
-%time ds_p8opt["DU003"].mean().compute()
-# CPU times: user 2min 44s, sys: 3.9 s, total: 2min 47s
-# Wall time: 2min 37s
+_ = ttime(lambda: ds_p8opt["DU003"].mean().compute())
+# Wall: 158.93, User: 165.10, System: 3.92
