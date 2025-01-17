@@ -2,7 +2,7 @@
 
 from typing import Iterable
 
-from utils import ttime
+from m21c_experiments.utils import ttime
 
 import xarray as xr
 import h5py
