@@ -62,3 +62,8 @@ However, applying the same general re-chunking to the lat-lon (`L1152x721`) data
 We need to explore a few different chunking structures and their impacts on file size and performance.
 The default way to go about this is to develop a common set of benchmarks, then define a few different chunk structures and try them out one by one.
 But, there may be cleverer ways.
+
+### File organization
+
+Time-permitting, we want to run some experiments on completely restructuring these files, such that, for a given simulation day, there is only one file per variable (and one variable per file); i.e., split up the files by variable, but aggregate all the time steps together.
+Here, we need to measure (1) the overall change in data volume to make sure we haven't dramatically increased it; (2) the impact on performance and usability of these data; and (3) the time and CPU resources it takes to actually restructure the files (which may be nontrivial! We also want to figure out the most computationally efficient tool/workflow to do this, that can leverage parallelization, etc.).
