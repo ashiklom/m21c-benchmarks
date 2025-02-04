@@ -39,3 +39,26 @@ The second part tells you how to interpret the time coordinate:
 
 - `inst` means instantaneous; i.e., the exact state at that exact moment in time (e.g., the mass of black carbon at exactly 12:00). The hourly results are distributed on the hour (e.g., 12:00, 1:00, 2:00...).
 - `tavg` means time-averaged; e.g., the total amount of precipitation between 12:00 and 1:00, or the average temperature in that time window. The hourly results are distributed on the 30 minute mark that is the midpoint of the window (e.g., `time=12:30` means the average between 12:00 and 1:00)
+
+## Objectives
+
+We want to figure out how to structure the M21C data to (1) minimize the total data volume (i.e., optimizes compression and within-file space usage); (2) maximize read and analysis performance; and (3) minimize the impact on post-processing time (i.e., the post-processing script can't take too long).
+
+Our degrees of freedom (in order of increasing user-facing impact) are:
+
+1. Low-level file optimizations like paged aggregation
+2. Internal chunking of the files (but keeping the overall organization the same)
+3. Redo the overall organization to have, e.g., fewer variables per file but more time steps per file
+
+#1 is basically done: I have already established pretty conclusively that **paged aggregation with an 8 MB chunk size** improves performance with negligible impacts on file size.
+We still need to figure out #2 and #3.
+
+### Chunking
+
+Starting with #2 above.
+
+Some initial results suggest that moving the cubed-sphere (`c360x360x6`) data from the default chunking (`time: 1, face: 1, vertical: 1, X: 360, Y: 360`) to smaller spatial (but more vertical) chunks --- e.g., `time: 1, face: 1, vertical: 36, X: 90, Y: 90` --- produces slightly smaller files and might have performance advantages for certain kinds of analysis (e.g., extracting a vertical profile).
+However, applying the same general re-chunking to the lat-lon (`L1152x721`) data dramatically inflates the file size.
+We need to explore a few different chunking structures and their impacts on file size and performance.
+The default way to go about this is to develop a common set of benchmarks, then define a few different chunk structures and try them out one by one.
+But, there may be cleverer ways.
