@@ -1,1 +1,13 @@
 # Experiments with MERRA21C cloud optimization
+
+## Project organization
+
+This project manages dependencies using pixi (https://pixi.sh/latest/).
+Individual scripts can be run using `pixi run python <scriptname>`.
+For interactive development work, you can use `pixi shell`.
+
+Alternatively, you can create your own environment using conda/mamba or some other tool; refer to either the `pixi.lock` file (for exact versions of all packages) or the `pyproject.toml` (for less precise version information).
+
+Note also that common functions used in some parts of the scripts are captured in a `m21c_experiments` package that you should install (in editable form).
+These follow standard Python module organization --- the source lives in `src/m21c_experiments/`.
+
